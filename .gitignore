@@ -1,0 +1,6 @@
+/target/
+AGENTS.md
+test.sh
+*.log
+logs/
+SoSearch
