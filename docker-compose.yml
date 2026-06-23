@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  scour:
+    build: .
+    container_name: scour-api
+    ports:
+      - "${PORT:-10080}:${PORT:-10080}"
+    environment:
+      - PORT=${PORT:-10080}
+    restart: unless-stopped
