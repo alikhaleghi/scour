@@ -6,8 +6,8 @@ use std::time::Duration;
 use tracing::info;
 use tokio::time::timeout;
 
-const ENGINE_TIMEOUT: Duration = Duration::from_secs(10);
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(8);
+const ENGINE_TIMEOUT: Duration = Duration::from_secs(5);
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
 
 pub async fn perform_search(query: &str) -> Vec<SearchResultItem> {
     let client = Client::builder()
