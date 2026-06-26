@@ -8,7 +8,7 @@ pub struct SearchResultItem {
     pub engine: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchResponse {
     pub query: String,
     pub results: Vec<SearchResultItem>,
