@@ -13,6 +13,8 @@ struct SearchParams { q: String }
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--mcp") { mcp::run().await; return; }
     tracing_subscriber::fmt::init();
     let app = Router::new().route("/search", get(search_handler));
     let port: u16 = std::env::var("PORT").unwrap_or_else(|_| "10080".to_string()).parse().unwrap_or(10080);
