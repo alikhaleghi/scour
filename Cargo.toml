@@ -1,7 +1,12 @@
 [package]
 name = "scour"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2024"
+description = "Lightning-fast web search API — scrapes Brave and Yahoo, returns normalized JSON. HTTP or MCP server for AI agents."
+license = "CC-BY-NC-4.0"
+repository = "https://github.com/alikhaleghi/scour"
+homepage = "https://github.com/alikhaleghi/scour"
+authors = ["Ali Khaleghi <alikhaleghi.dev@gmail.com>"]
 
 [dependencies]
 axum = "0.8.8"
