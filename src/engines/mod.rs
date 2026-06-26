@@ -6,7 +6,7 @@ use duckduckgo::DuckDuckGo;
 use brave::Brave;
 use yahoo::Yahoo;
 use crate::models::SearchResultItem;
-use rquest::Client;
+use reqwest::Client;
 
 pub enum SearchEngine {
     DuckDuckGo(DuckDuckGo),
@@ -22,6 +22,7 @@ impl SearchEngine {
             Self::Yahoo(e) => e.name(),
         }
     }
+
     pub async fn search(&self, query: &str, client: &Client) -> Result<Vec<SearchResultItem>, Box<dyn std::error::Error + Send + Sync>> {
         match self {
             Self::DuckDuckGo(e) => e.search(query, client).await,
