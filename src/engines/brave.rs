@@ -4,6 +4,14 @@ use crate::models::SearchResultItem;
 
 pub struct Brave;
 
+fn extract_text(element: &scraper::ElementRef, selector: &Selector) -> String {
+    element
+        .select(selector)
+        .next()
+        .map(|el| el.text().collect::<Vec<_>>().join(" ").trim().to_string())
+        .unwrap_or_default()
+}
+
 impl Brave {
     pub fn name(&self) -> &'static str {
         "Brave"
@@ -11,42 +19,54 @@ impl Brave {
 
     pub async fn search(&self, query: &str, client: &Client) -> Result<Vec<SearchResultItem>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("https://search.brave.com/search?q={}", urlencoding::encode(query));
-        
+
         let response = client.get(&url).send().await?.text().await?;
-        
+
         let document = Html::parse_document(&response);
-        // Brave generally uses .snippet for main results
-        let result_selector = Selector::parse(".snippet").unwrap();
-        let title_selector = Selector::parse(".title").unwrap();
-        let link_selector = Selector::parse("a").unwrap();
-        let snippet_selector = Selector::parse(".snippet-description, .snippet-content, .description").unwrap();
+
+        let result_selector = Selector::parse(".snippet, [data-result], .result").unwrap();
+        let title_selector = Selector::parse(".title, .snippet-title, h2, [class*=\"title\"]").unwrap();
+        let link_selector = Selector::parse("a[href^=\"https://\"], a[href^=\"http://\"]").unwrap();
+        let snippet_selector = Selector::parse(
+            ".snippet-description, .snippet-content, .description, \
+             .snippet-description p, .content, .result-snippet, \
+             p.snippet, [class*=\"description\"], [class*=\"snippet\"]"
+        ).unwrap();
 
         let mut results = Vec::new();
 
         for element in document.select(&result_selector) {
-            if let Some(title_el) = element.select(&title_selector).next() {
-                let title = title_el.text().collect::<Vec<_>>().join(" ").trim().to_string();
-                
-                let url = if let Some(link_el) = element.select(&link_selector).next() {
-                    link_el.value().attr("href").unwrap_or("").to_string()
-                } else {
-                    String::new()
-                };
+            let title = extract_text(&element, &title_selector);
+            let url = element
+                .select(&link_selector)
+                .next()
+                .and_then(|el| el.value().attr("href"))
+                .unwrap_or("")
+                .to_string();
 
-                let snippet = if let Some(snip_el) = element.select(&snippet_selector).next() {
-                    snip_el.text().collect::<Vec<_>>().join(" ").trim().to_string()
-                } else {
-                    String::new()
-                };
+            let mut snippet = extract_text(&element, &snippet_selector);
 
-                if !url.is_empty() && !url.starts_with('/') && !title.is_empty() {
-                    results.push(SearchResultItem {
-                        title,
-                        url,
-                        snippet,
-                        engine: self.name().to_string(),
-                    });
+            if snippet.is_empty() {
+                let all_text: String = element.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                if !title.is_empty() {
+                    snippet = all_text
+                        .replace(&title, "")
+                        .trim()
+                        .splitn(2, |c: char| c.is_whitespace() && c == ' ')
+                        .nth(1)
+                        .unwrap_or("")
+                        .trim()
+                        .to_string();
                 }
+            }
+
+            if !url.is_empty() && !title.is_empty() {
+                results.push(SearchResultItem {
+                    title,
+                    url,
+                    snippet,
+                    engine: self.name().to_string(),
+                });
             }
         }
 
