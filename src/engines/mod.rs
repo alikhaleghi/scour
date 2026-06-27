@@ -7,6 +7,7 @@ use brave::Brave;
 use yahoo::Yahoo;
 use crate::models::SearchResultItem;
 use reqwest::Client;
+use std::time::Duration;
 
 pub enum SearchEngine {
     DuckDuckGo(DuckDuckGo),
@@ -20,6 +21,13 @@ impl SearchEngine {
             Self::DuckDuckGo(e) => e.name(),
             Self::Brave(e) => e.name(),
             Self::Yahoo(e) => e.name(),
+        }
+    }
+
+    pub fn timeout(&self) -> Duration {
+        match self {
+            Self::DuckDuckGo(_) => Duration::from_secs(2),
+            Self::Brave(_) | Self::Yahoo(_) => Duration::from_secs(5),
         }
     }
 
