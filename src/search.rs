@@ -2,6 +2,7 @@ use crate::engines::{duckduckgo::DuckDuckGo, brave::Brave, yahoo::Yahoo, SearchE
 use crate::models::SearchResultItem;
 use futures::stream::{FuturesUnordered, StreamExt};
 use reqwest::Client;
+use std::collections::HashSet;
 use std::time::Duration;
 use tracing::info;
 use tokio::time::timeout;
@@ -55,5 +56,27 @@ pub async fn perform_search(query: &str) -> Vec<SearchResultItem> {
         }
     }
 
-    results
+    deduplicate_results(results)
+}
+
+fn deduplicate_results(results: Vec<SearchResultItem>) -> Vec<SearchResultItem> {
+    let mut seen = HashSet::new();
+    let mut deduped = Vec::new();
+
+    for item in results {
+        let url = item.url.trim().to_lowercase();
+        if seen.contains(&url) {
+            if let Some(existing) = deduped.iter_mut().find(|r: &&mut SearchResultItem| r.url.trim().to_lowercase() == url) {
+                if !existing.engine.contains(&item.engine) {
+                    existing.engine.push_str(", ");
+                    existing.engine.push_str(&item.engine);
+                }
+            }
+        } else {
+            seen.insert(url);
+            deduped.push(item);
+        }
+    }
+
+    deduped
 }
