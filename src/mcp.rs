@@ -119,7 +119,7 @@ fn handle_tools_list() -> Result<Value, Value> {
         "tools": [
             {
                 "name": "web_search",
-                "description": "Search the web using multiple search engines (DuckDuckGo, Brave, Yahoo) concurrently and return aggregated results.",
+                "description": "Search the web using Brave and Yahoo concurrently and return aggregated results.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {

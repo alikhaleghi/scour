@@ -12,7 +12,6 @@ impl Yahoo {
     pub async fn search(&self, query: &str, client: &Client) -> Result<Vec<SearchResultItem>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("https://search.yahoo.com/search?p={}", urlencoding::encode(query));
         
-        // Yahoo tends to be lenient with datacenter IPs compared to others, but we still use the impersonated client
         let response = client.get(&url).send().await?.text().await?;
         
         let document = Html::parse_document(&response);
