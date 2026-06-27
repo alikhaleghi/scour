@@ -7,7 +7,7 @@ pub struct DuckDuckGo;
 
 impl DuckDuckGo {
     pub fn name(&self) -> &'static str {
-        "duckduckgo"
+        "DuckDuckGo"
     }
 
     pub async fn search(&self, query: &str, client: &Client) -> Result<Vec<SearchResultItem>, Box<dyn std::error::Error + Send + Sync>> {
