@@ -7,7 +7,6 @@ use std::time::Duration;
 use tracing::info;
 use tokio::time::timeout;
 
-const ENGINE_TIMEOUT: Duration = Duration::from_secs(5);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
 
 /// Perform a concurrent web search across all engines.
@@ -29,11 +28,12 @@ pub async fn perform_search(query: &str) -> Vec<SearchResultItem> {
     let mut tasks = FuturesUnordered::new();
 
     for engine in engines {
+        let engine_timeout = engine.timeout();
         let q = query.to_string();
         let c = client.clone();
         tasks.push(tokio::spawn(async move {
             let name = engine.name();
-            match timeout(ENGINE_TIMEOUT, engine.search(&q, &c)).await {
+            match timeout(engine_timeout, engine.search(&q, &c)).await {
                 Ok(Ok(items)) => {
                     info!("{} returned {} results", name, items.len());
                     items
