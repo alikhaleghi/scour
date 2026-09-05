@@ -1,10 +1,12 @@
 pub mod duckduckgo;
 pub mod brave;
 pub mod yahoo;
+pub mod google;
 
 use duckduckgo::DuckDuckGo;
 use brave::Brave;
 use yahoo::Yahoo;
+use google::Google;
 use crate::models::SearchResultItem;
 use reqwest::Client;
 use std::time::Duration;
@@ -13,6 +15,7 @@ pub enum SearchEngine {
     DuckDuckGo(DuckDuckGo),
     Brave(Brave),
     Yahoo(Yahoo),
+    Google(Google),
 }
 
 impl SearchEngine {
@@ -21,6 +24,7 @@ impl SearchEngine {
             Self::DuckDuckGo(e) => e.name(),
             Self::Brave(e) => e.name(),
             Self::Yahoo(e) => e.name(),
+            Self::Google(e) => e.name(),
         }
     }
 
@@ -28,6 +32,7 @@ impl SearchEngine {
         match self {
             Self::DuckDuckGo(_) => Duration::from_secs(2),
             Self::Brave(_) | Self::Yahoo(_) => Duration::from_secs(5),
+            Self::Google(_) => Duration::from_secs(15),
         }
     }
 
@@ -36,6 +41,7 @@ impl SearchEngine {
             Self::DuckDuckGo(e) => e.search(query, client).await,
             Self::Brave(e) => e.search(query, client).await,
             Self::Yahoo(e) => e.search(query, client).await,
+            Self::Google(e) => e.search(query, client).await,
         }
     }
 }

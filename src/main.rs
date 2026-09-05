@@ -29,7 +29,14 @@ async fn main() {
     }
 
     // HTTP server mode (default)
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| {
+                    tracing_subscriber::EnvFilter::new("info,chromiumoxide::handler=error")
+                }),
+        )
+        .init();
 
     let app = Router::new().route("/search", get(search_handler));
 

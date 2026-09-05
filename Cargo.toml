@@ -10,6 +10,7 @@ authors = ["Ali Khaleghi <alikhaleghi.dev@gmail.com>"]
 
 [dependencies]
 axum = "0.8.8"
+chromiumoxide = "0.9.1"
 futures = "0.3.32"
 reqwest = { version = "0.12.18", default-features = false, features = ["rustls-tls"] }
 scraper = "0.25.0"
@@ -17,5 +18,5 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 tokio = { version = "1.49.0", features = ["full"] }
 tracing = "0.1.44"
-tracing-subscriber = "0.3.22"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 urlencoding = "2.1.3"
