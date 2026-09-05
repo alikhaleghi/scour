@@ -27,7 +27,8 @@ impl SearchEngine {
     pub fn timeout(&self) -> Duration {
         match self {
             Self::DuckDuckGo(_) => Duration::from_secs(2),
-            Self::Brave(_) | Self::Yahoo(_) => Duration::from_secs(5),
+            Self::Brave(_) => Duration::from_secs(5),
+            Self::Yahoo(_) => Duration::from_secs(8),
         }
     }
 

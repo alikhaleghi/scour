@@ -1,8 +1,14 @@
 use reqwest::Client;
 use scraper::{Html, Selector};
 use crate::models::SearchResultItem;
+use std::sync::OnceLock;
+use std::time::Duration;
 
 pub struct Brave;
+
+/// Pre-warm Brave's visitor/`brownie` cookie once per process so repeat hits
+/// are not flagged cold by bot protection.
+static WARMED: OnceLock<()> = OnceLock::new();
 
 impl Brave {
     pub fn name(&self) -> &'static str {
@@ -10,6 +16,20 @@ impl Brave {
     }
 
     pub async fn search(&self, query: &str, client: &Client) -> Result<Vec<SearchResultItem>, Box<dyn std::error::Error + Send + Sync>> {
+        if WARMED.set(()).is_ok() {
+            let _ = client.get("https://search.brave.com/").send().await;
+        }
+
+        let mut results = self.fetch_results(query, client).await?;
+        if results.is_empty() {
+            tokio::time::sleep(Duration::from_millis(500)).await;
+            results = self.fetch_results(query, client).await?;
+        }
+
+        Ok(results)
+    }
+
+    async fn fetch_results(&self, query: &str, client: &Client) -> Result<Vec<SearchResultItem>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("https://search.brave.com/search?q={}", urlencoding::encode(query));
 
         let response = client.get(&url).send().await?.text().await?;

@@ -11,7 +11,7 @@ authors = ["Ali Khaleghi <alikhaleghi.dev@gmail.com>"]
 [dependencies]
 axum = "0.8.8"
 futures = "0.3.32"
-reqwest = { version = "0.12.18", default-features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.12.18", default-features = false, features = ["rustls-tls", "cookies"] }
 scraper = "0.25.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
