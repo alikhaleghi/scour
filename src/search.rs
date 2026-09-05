@@ -1,22 +1,42 @@
 use crate::engines::{duckduckgo::DuckDuckGo, brave::Brave, yahoo::Yahoo, SearchEngine};
 use crate::models::SearchResultItem;
 use futures::stream::{FuturesUnordered, StreamExt};
+use reqwest::header::{HeaderMap, ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE};
+use reqwest::cookie::Jar;
 use reqwest::Client;
 use std::collections::HashSet;
+use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use tracing::info;
 use tokio::time::timeout;
 
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(8);
+
+/// Shared across requests so per-engine cookies (Brave's `brownie` visitor
+/// cookie) persist instead of every request arriving cold.
+static COOKIE_JAR: LazyLock<Arc<Jar>> = LazyLock::new(|| Arc::new(Jar::default()));
+
+fn build_client() -> Client {
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8".parse().unwrap());
+    headers.insert(ACCEPT_LANGUAGE, "en-US,en;q=0.9".parse().unwrap());
+    // Ask for a plain body: Brave's bot-protection serves a compressed/challenge
+    // body that reqwest cannot decode ("error decoding response body").
+    headers.insert(ACCEPT_ENCODING, "identity".parse().unwrap());
+
+    Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+        .default_headers(headers)
+        .cookie_provider(COOKIE_JAR.clone())
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .unwrap_or_else(|_| Client::new())
+}
 
 /// Perform a concurrent web search across all engines.
 /// Shared by both the HTTP handler and MCP handler.
 pub async fn perform_search(query: &str) -> Vec<SearchResultItem> {
-    let client = Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-        .timeout(REQUEST_TIMEOUT)
-        .build()
-        .unwrap_or_else(|_| Client::new());
+    let client = build_client();
 
     let engines: Vec<SearchEngine> = vec![
         SearchEngine::DuckDuckGo(DuckDuckGo),
